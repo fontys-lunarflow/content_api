@@ -1,0 +1,53 @@
+services:
+    # java container
+    test:
+        container_name: ticket_api
+        build:
+            context: src/main/docker
+            dockerfile: Dockerfile.dev
+        ports:
+            - "5000:8080"
+            - "5005:5005" #debugging port
+        restart: always
+        volumes:
+            - ./:/work/
+        command: ["./mvnw", "quarkus:dev"]
+        depends_on:
+            - db
+
+    # database
+    db:
+        container_name: db
+        image: postgres:17
+        ports:
+            - 5432:5432
+        volumes:
+            # data persistence
+            - ./volumes/postgres:/var/lib/postgresql/data
+            # init script
+            # - ./docker/postgres:/docker-entrypoint-initdb.d
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password
+        healthcheck:
+            test: pg_isready -d postgres -U postgres
+            interval: 5s
+            timeout: 5s
+            retries: 6
+
+
+    # pgadmin
+    pgadmin:
+        image: dpage/pgadmin4
+        container_name: pgadmin4_container
+        restart: always
+        ports:
+            - "8888:80"
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: password
+        volumes:
+            - ./volumes/pgadmin:/var/lib/pgadmin
+        depends_on:
+            - db

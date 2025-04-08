@@ -1,0 +1,6 @@
+# ignore * because of hot reload (dev only!)
+# *
+!target/*-runner
+!target/*-runner.jar
+!target/lib/*
+!target/quarkus-app/*
