@@ -4,3 +4,6 @@
 !target/*-runner.jar
 !target/lib/*
 !target/quarkus-app/*
+
+# ignore volumes mounted to host from other containers
+volumes/*
