@@ -1,7 +1,7 @@
 services:
     # java container
     test:
-        container_name: ticket_api
+        container_name: content_api
         build:
             context: src/main/docker
             dockerfile: Dockerfile.dev
