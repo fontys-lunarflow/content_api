@@ -1,4 +1,4 @@
-# ticket-api
+# content-api
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
