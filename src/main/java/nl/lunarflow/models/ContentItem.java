@@ -9,7 +9,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
-// import org.hibernate.validator.constraints.URL;
+
+import jakarta.ws.rs.NotFoundException;
+
+import org.hibernate.validator.constraints.URL;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
@@ -25,17 +29,16 @@ public class ContentItem extends PanacheEntity {
     @NotBlank(message = "Topic cannot be blank")
     public String topic;
 
-    // project id (Project model)
     @ManyToOne(fetch = FetchType.EAGER)
     public Project project;
 
     @Future(message = "Publication date must be in the future.")
     public Instant publicationDate;
 
-    // @URL(protocol = "https")
+    @URL(protocol = "https")
     public String link;
     
-    // @URL(protocol = "https")
+    @URL(protocol = "https")
     public String gitlabIssueUrl;
 
     @Enumerated(EnumType.STRING)
@@ -47,4 +50,11 @@ public class ContentItem extends PanacheEntity {
     // persona (Persona enum)
 
     public String successMeasurements;
+
+    @JsonProperty("projectId")
+    public void setProjectId(Long projectId) {
+        if (projectId != null) {
+            this.project = Project.findById(projectId);
+        }
+    }
 }
