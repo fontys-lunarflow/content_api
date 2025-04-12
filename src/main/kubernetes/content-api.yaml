@@ -13,7 +13,7 @@ spec:
         app: content-api
     spec:
       containers:
-          image: ghcr.io/fontys-lunarflow/content_api:latest
+        - image: ghcr.io/fontys-lunarflow/content_api:latest
           imagePullPolicy: Always
           name: content-api
       restartPolicy: Always
