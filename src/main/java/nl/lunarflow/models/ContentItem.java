@@ -9,9 +9,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
-
-import jakarta.ws.rs.NotFoundException;
-
 import org.hibernate.validator.constraints.URL;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;

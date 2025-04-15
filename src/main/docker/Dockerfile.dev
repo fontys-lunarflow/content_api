@@ -4,4 +4,4 @@ WORKDIR /work
 
 COPY . /work/
 
-CMD ./mvnw clean compile
+# CMD ./mvnw clean compile
