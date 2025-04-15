@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-api
+spec:
+  selector:
+    matchLabels:
+      app: content-api
+  template:
+    metadata:
+      labels:
+        app: content-api
+    spec:
+      serviceAccountName: quarkus-app
+      containers:
+      - name: content-api
+        image: ghcr.io/fontys-lunarflow/content_api:latest
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        ports:
+        - containerPort: 8080
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: content-service
+spec:
+  selector:
+    app: content-api
+  ports:
+  - port: 8080
+    targetPort: http
