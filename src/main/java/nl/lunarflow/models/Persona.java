@@ -4,24 +4,22 @@ import java.util.List;
 import java.util.ArrayList;
 import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Column;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToMany;
 import jakarta.validation.constraints.NotBlank;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
 @Table
-public class Project extends PanacheEntity {
-    
+public class Persona extends PanacheEntity {
     @NotBlank
     public String name;
 
-    @Column(length = 6)
-    public String color;
+    @NotBlank
+    public String description;
 
     // access fields
     @JsonIgnore
-    @OneToMany(mappedBy = "project")
+    @ManyToMany(mappedBy = "personas")
     public List<ContentItem> contentItems = new ArrayList<>();
 }

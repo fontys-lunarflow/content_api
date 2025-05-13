@@ -11,6 +11,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.validation.Valid;
 import org.jboss.logging.Logger;
+import org.jboss.logging.Logger.*;
 import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.MediaType;
@@ -81,17 +82,16 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
             throw new NotFoundException("Please specify an existing project.");
         }
 
-        // update the fields
+        // update all the fields
         entity.title = updatedContentItem.title;
-        entity.subject = updatedContentItem.subject;
-        entity.topic = updatedContentItem.topic;
         entity.project = updatedContentItem.project;
-        entity.publicationDate = updatedContentItem.publicationDate;
-        entity.link = updatedContentItem.link;
+        entity.personResponsibleId = updatedContentItem.personResponsibleId;
         entity.gitlabIssueUrl = updatedContentItem.gitlabIssueUrl;
+        entity.gitlabId = updatedContentItem.gitlabId;
         entity.lifecycleStage = updatedContentItem.lifecycleStage;
         entity.status = updatedContentItem.status;
-        entity.successMeasurements = updatedContentItem.successMeasurements;
+        entity.channels = updatedContentItem.channels;
+        entity.publicationDate = updatedContentItem.publicationDate;
 
         entity.persistAndFlush();
 
