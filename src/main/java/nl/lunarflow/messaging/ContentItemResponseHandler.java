@@ -14,9 +14,9 @@ public class ContentItemResponseHandler implements ResponseHandler {
     @Override
     @Transactional
     public void handleResponse(String correlationId, String response, Subjects subject) {
-        if (!correlationId.startsWith("content_item.")) return;
+        if (!correlationId.startsWith("content_api.content_item.")) return;
 
-        Long id = Long.parseLong(correlationId.replace("content_item.", ""));
+        Long id = Long.parseLong(correlationId.replace("content_api.content_item.", ""));
         ContentItem item = ContentItem.findById(id);
 
         if (item == null) {
@@ -30,7 +30,7 @@ public class ContentItemResponseHandler implements ResponseHandler {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        String gitlabUrl = json.path("gitlab_url").asText();
+        String gitlabUrl = json.path("url").asText();
 
         if (gitlabUrl != null && !gitlabUrl.isBlank()) {
             item.gitlabIssueUrl = gitlabUrl;

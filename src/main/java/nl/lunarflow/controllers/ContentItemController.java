@@ -108,7 +108,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @DELETE
     @Path("{id}")
     @Transactional
-    public Response delete(Long id) {
+    public Response delete(Long id) throws IOException {
         ContentItem entity = ContentItem.findById(id);
 
         if (entity == null) {
@@ -118,6 +118,9 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         entity.delete();
         
         ObjectNode responseBody = objectMapper.createObjectNode();
+
+        messagingService.sendMessage(entity, Subjects.TICKET_CLOSE);
+
         responseBody.put("message", "Content item deleted successfully.");
 
 

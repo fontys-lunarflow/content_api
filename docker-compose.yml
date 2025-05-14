@@ -1,13 +1,13 @@
 networks:
-    backend-network:
-        driver: bridge
+    backend_network:
+        external: true
 
 services:
     # java container
     content_api:
         container_name: content_api
         networks:
-            - backend-network
+            - backend_network
         build:
             context: src/main/docker
             dockerfile: Dockerfile.dev
@@ -27,7 +27,7 @@ services:
         container_name: db
         image: postgres:17
         networks:
-            - backend-network
+            - backend_network
         ports:
             - 5432:5432
         volumes:
@@ -50,7 +50,7 @@ services:
     pgadmin:
         image: dpage/pgadmin4
         networks:
-            - backend-network
+            - backend_network
         container_name: pgadmin4_container
         restart: always
         ports:
@@ -65,7 +65,7 @@ services:
 
     rabbitmq:
         networks:
-            - backend-network
+            - backend_network
         container_name: rabbitmq
         image: rabbitmq:3-management
         ports:
