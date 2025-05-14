@@ -9,7 +9,6 @@ import jakarta.inject.Inject;
 import nl.lunarflow.models.ContentItem;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 @ApplicationScoped
@@ -36,13 +35,25 @@ public class RabbitMQClient implements MessagingService {
         requestChannel = connection.createChannel();
         responseChannel = connection.createChannel();
 
-        responseChannel.queueDeclare(rabbitMQConfig.responseQueue, true, false, false, null);
-        requestChannel.queueDeclare(rabbitMQConfig.requestQueue, true, false, false, null);
+        requestChannel.exchangeDeclare(rabbitMQConfig.exchange, BuiltinExchangeType.DIRECT, true);
+        responseChannel.exchangeDeclare(rabbitMQConfig.exchange, BuiltinExchangeType.DIRECT, true);
+
+        // Setup 2 different channels, one for sending messages to ticket API, one for receiving
+        for (Subjects subject : Subjects.values()) {
+            responseChannel.queueDeclare(subject.toString(), true, false, false, null);
+            requestChannel.queueDeclare(subject.toString(), true, false, false, null);
+
+            responseChannel.queueBind(subject.toString(), rabbitMQConfig.exchange, subject.toString());
+            requestChannel.queueBind(subject.toString(), rabbitMQConfig.exchange, subject.toString());
+        }
+
 
         startReplyConsumer();
     }
 
     public void sendMessage(ContentItem contentItem, Subjects subject) throws IOException {
+        // We are using the content item ID as identifier so I can easily refer to the content item in db after the fact
+        // TODO: discuss with the group if this is okay, or we should change this for safety reasons
         String correlationId = "content_item." + contentItem.id.toString();
 
         AMQP.BasicProperties props = new AMQP.BasicProperties
@@ -54,22 +65,21 @@ public class RabbitMQClient implements MessagingService {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String json = ow.writeValueAsString(contentItem);
 
+        // Currently we are sending the full content item as json to the tic(tAPI
+        // TODO: change this
         requestChannel.basicPublish(rabbitMQConfig.exchange, subject.toString(), props, json.getBytes());
-    }
-    
-    private void handleCallback(String consumerTag, Delivery delivery, Subjects subject) throws IOException {
-        String correlationId = delivery.getProperties().getCorrelationId();
-
-        String response = new String(delivery.getBody());
-        delivery.getProperties().getHeaders();
-
-        responseHandler.handleResponse(correlationId, response, subject);
     }
 
     public void startReplyConsumer() throws IOException {
+        // For now there is only a single implementation of the response handler, if this changes it wouldnt be logical to keep it like this
         for (Subjects subject : Subjects.values()) {
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-                handleCallback(consumerTag, delivery, subject);
+                String correlationId = delivery.getProperties().getCorrelationId();
+
+                String response = new String(delivery.getBody());
+                delivery.getProperties().getHeaders();
+
+                responseHandler.handleResponse(correlationId, response, subject);
             };
 
             responseChannel.basicConsume(subject.toString(), true, deliverCallback, consumerTag -> {});

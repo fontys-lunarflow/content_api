@@ -1,7 +1,13 @@
+networks:
+    backend-network:
+        driver: bridge
+
 services:
     # java container
     content_api:
         container_name: content_api
+        networks:
+            - backend-network
         build:
             context: src/main/docker
             dockerfile: Dockerfile.dev
@@ -14,11 +20,14 @@ services:
         command: ["./mvnw", "quarkus:dev"]
         depends_on:
             - db
+            - rabbitmq
 
     # database
     db:
         container_name: db
         image: postgres:17
+        networks:
+            - backend-network
         ports:
             - 5432:5432
         volumes:
@@ -30,16 +39,18 @@ services:
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: password
-        healthcheck:
-            test: pg_isready -d postgres -U postgres
-            interval: 5s
-            timeout: 5s
-            retries: 6
+        # healthcheck:
+        #     test: pg_isready -d postgres -U postgres
+        #     interval: 5s
+        #     timeout: 5s
+        #     retries: 6
 
 
     # pgadmin
     pgadmin:
         image: dpage/pgadmin4
+        networks:
+            - backend-network
         container_name: pgadmin4_container
         restart: always
         ports:
@@ -51,3 +62,12 @@ services:
             - ./volumes/pgadmin:/var/lib/pgadmin
         depends_on:
             - db
+
+    rabbitmq:
+        networks:
+            - backend-network
+        container_name: rabbitmq
+        image: rabbitmq:3-management
+        ports:
+        - "5672:5672"
+        - "15672:15672"

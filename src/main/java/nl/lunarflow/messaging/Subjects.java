@@ -11,14 +11,18 @@ public enum Subjects {
     LABEL_LIST("label.list"),
     ;
 
-    private final String text;
+    // Everything under here is, so I can access the toString() method to convert the enum types into correct string form
+    private final String topic;
 
-    Subjects(final String text) {
-        this.text = text;
+    ///
+    /// @param topic This refers to the topic name within rabbitMQ
+    ///
+    Subjects(final String topic) {
+        this.topic = topic;
     }
 
     @Override
     public String toString() {
-        return text;
+        return topic;
     }
 }

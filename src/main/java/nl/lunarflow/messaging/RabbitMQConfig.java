@@ -6,24 +6,24 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class RabbitMQConfig {
 
-    @ConfigProperty(name = "rabbitmq.host")
-    public String host;
+//    @ConfigProperty(name = "rabbitmq.host")
+    public String host = "rabbitmq";
 
-    @ConfigProperty(name = "rabbitmq.port")
-    public int port;
+//    @ConfigProperty(name = "rabbitmq.port")
+    public int port = 5672;
 
-    @ConfigProperty(name = "rabbitmq.username")
-    public String username;
+//    @ConfigProperty(name = "rabbitmq.username")
+    public String username = "guest";
 
-    @ConfigProperty(name = "rabbitmq.password")
-    public String password;
+//    @ConfigProperty(name = "rabbitmq.password")
+    public String password = "guest";
 
-    @ConfigProperty(name = "rabbitmq.exchange")
-    public String exchange;
+//    @ConfigProperty(name = "rabbitmq.exchange")
+    public String exchange = "ticket.exchange";
 
-    @ConfigProperty(name = "rabbitmq.response-queue")
-    public String responseQueue;
+//    @ConfigProperty(name = "rabbitmq.response-queue")
+    public String responseQueue = "ticketapi.response";
 
-    @ConfigProperty(name = "rabbitmq.request-queue")
-    public String requestQueue;
+//    @ConfigProperty(name = "rabbitmq.request-queue")
+    public String requestQueue = "ticketapi.request";
 }
