@@ -5,17 +5,17 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
-import nl.lunarflow.models.Project;
+import nl.lunarflow.models.Persona;
 import jakarta.ws.rs.core.MediaType;
 import io.quarkus.panache.common.Sort;
 
-@Path("/projects")
+@Path("/personas")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class ProjectController {
+public class PersonaController {
 
     @GET
-    public List<Project> get() {
-        return Project.listAll(Sort.by("name"));
+    public List<Persona> get() {
+        return Persona.listAll(Sort.by("name"));
     }
 }
