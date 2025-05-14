@@ -7,7 +7,6 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.DELETE;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
@@ -19,6 +18,7 @@ import jakarta.ws.rs.core.MediaType;
 import io.quarkus.panache.common.Sort;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.WebApplicationException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,16 +49,44 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         @QueryParam("week") Integer week,
         @QueryParam("year") Integer year
         ) {
-
+            // null check query params
             if (week == null) {
                 throw new BadRequestException("Please supply the week.");
             }
 
             if (year == null) {
-                throw new BadRequestException("Please supply the week.");
+                throw new BadRequestException("Please supply the year.");
             }
 
-            return ContentItem.findByWeekAndYear(week, year);
+            if (week < 1 || week > 53) {
+                throw new BadRequestException("Please supply a valid week (1-53).");
+            }
+
+
+            return ContentItem.findByWeekView(week, year);
+    }
+
+    @GET
+    @Path("monthly")
+    @Transactional
+    public List<ContentItem> getMonthly(
+        @QueryParam("month") Integer month,
+        @QueryParam("year") Integer year
+        ) {
+            // null check the query params
+            if (month == null) {
+                throw new BadRequestException("Please supply the month.");
+            }
+
+            if (year == null) {
+                throw new BadRequestException("Please supply the year.");
+            }
+            
+            if (month < 1 || month > 12) {
+                throw new BadRequestException("Please supply a valid month (1-12).");
+            }
+
+            return ContentItem.findByMonthView(month, year);
     }
 
     @GET

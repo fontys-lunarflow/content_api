@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.panache.common.Sort;
 
 @Entity
 @Table
@@ -97,8 +98,12 @@ public class ContentItem extends PanacheEntity {
     }
 
     // custom querying functionality
-    public static List<ContentItem> findByWeekAndYear(int week, int year) {
+
+    // find all content items epr 
+    public static List<ContentItem> findByWeekView(int week, int year) {
         WeekFields weekFields = WeekFields.ISO;
+
+        // Calculate the ISO week boundaries
         LocalDate startDate = LocalDate
             .now()
             .withYear(year)
@@ -108,9 +113,31 @@ public class ContentItem extends PanacheEntity {
         LocalDate endDate = startDate.plusDays(6);
         LocalDateTime endOfDay = LocalDateTime.of(endDate, LocalTime.MAX);
 
+        // Convert to Instants (UTC)
         Instant startInstant = startDate.atStartOfDay(ZoneOffset.UTC).toInstant();
         Instant endInstant = endOfDay.atZone(ZoneOffset.UTC).toInstant();
 
-        return find("publicationDate >= ?1 and publicationDate <= ?2", startInstant, endInstant).list();
+        return find("publicationDate >= ?1 and publicationDate <= ?2", Sort.by("publicationDate"), startInstant, endInstant).list();
+    }
+
+    public static List<ContentItem> findByMonthView(int month, int year) {
+        LocalDate firstOfMonth = LocalDate.of(year, month, 1);
+        // Last day of the selected month
+        LocalDate lastOfMonth = firstOfMonth.withDayOfMonth(firstOfMonth.lengthOfMonth());
+
+        WeekFields weekFields = WeekFields.ISO;
+
+        // Start on the Monday of the first visible week
+        LocalDate calendarStart = firstOfMonth.with(weekFields.dayOfWeek(), 1); // Monday before or on the 1st
+
+        // End on the Sunday of the last visible week
+        LocalDate calendarEnd = lastOfMonth.with(weekFields.dayOfWeek(), 7); // Sunday after or on the last day
+
+        // Convert to Instants (UTC)
+        Instant startInstant = calendarStart.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant endInstant = calendarEnd.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant();
+
+        // Fetch content items in that range
+        return find("publicationDate >= ?1 and publicationDate <= ?2", Sort.by("publicationDate"), startInstant, endInstant).list();
     }
 }
