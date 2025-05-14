@@ -1,6 +1,10 @@
 package nl.lunarflow.controllers;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+
+import com.rabbitmq.client.AMQP;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -10,6 +14,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.validation.Valid;
+import nl.lunarflow.constants.Constants;
+import nl.lunarflow.messaging.MessagingService;
+import nl.lunarflow.messaging.RabbitMQClient;
 import org.jboss.logging.Logger;
 import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.core.Response;
@@ -33,6 +40,8 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     
     @Inject
     ObjectMapper objectMapper;
+    @Inject
+    MessagingService messagingService;
 
     @GET
     @Transactional
@@ -55,7 +64,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
     @POST
     @Transactional
-    public Response create(@Valid ContentItem contentItem) {
+    public Response create(@Valid ContentItem contentItem) throws IOException {
 
         if (contentItem.project == null) {
             // FIXME: i cannot get projectId from the request body, and raising 404 in the deserialization (Content) does not work
@@ -63,6 +72,8 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         }
 
         contentItem.persistAndFlush();
+
+        messagingService.sendMessage(contentItem);
 
         return Response.ok().entity(contentItem).build();
     }
