@@ -9,11 +9,13 @@ import jakarta.inject.Inject;
 import nl.lunarflow.models.ContentItem;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 @ApplicationScoped
 public class RabbitMQClient implements MessagingService {
-    private Channel channel;
+    private Channel requestChannel;
+    private Channel responseChannel;
     private Connection connection;
 
     @Inject
@@ -31,44 +33,53 @@ public class RabbitMQClient implements MessagingService {
         factory.setPort(rabbitMQConfig.port);
 
         connection = factory.newConnection();
-        channel = connection.createChannel();
+        requestChannel = connection.createChannel();
+        responseChannel = connection.createChannel();
 
-        channel.queueDeclare(rabbitMQConfig.replyQueue, true, false, false, null);
+        responseChannel.queueDeclare(rabbitMQConfig.responseQueue, true, false, false, null);
+        requestChannel.queueDeclare(rabbitMQConfig.requestQueue, true, false, false, null);
 
         startReplyConsumer();
     }
 
-    public void sendMessage(ContentItem contentItem) throws IOException {
+    public void sendMessage(ContentItem contentItem, Subjects subject) throws IOException {
         String correlationId = "content_item." + contentItem.id.toString();
 
         AMQP.BasicProperties props = new AMQP.BasicProperties
                 .Builder()
                 .correlationId(correlationId)
-                .replyTo(rabbitMQConfig.replyQueue)
+                .replyTo(rabbitMQConfig.requestQueue)
                 .build();
 
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String json = ow.writeValueAsString(contentItem);
 
-        channel.basicPublish(rabbitMQConfig.exchange, rabbitMQConfig.routingKey, props, json.getBytes());
+        requestChannel.basicPublish(rabbitMQConfig.exchange, subject.toString(), props, json.getBytes());
+    }
+    
+    private void handleCallback(String consumerTag, Delivery delivery, Subjects subject) throws IOException {
+        String correlationId = delivery.getProperties().getCorrelationId();
+
+        String response = new String(delivery.getBody());
+        delivery.getProperties().getHeaders();
+
+        responseHandler.handleResponse(correlationId, response, subject);
     }
 
     public void startReplyConsumer() throws IOException {
-        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-            String correlationId = delivery.getProperties().getCorrelationId();
+        for (Subjects subject : Subjects.values()) {
+            DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+                handleCallback(consumerTag, delivery, subject);
+            };
 
-            String response = new String(delivery.getBody());
-
-            responseHandler.handleResponse(correlationId, response);
-        };
-
-        channel.basicConsume(rabbitMQConfig.replyQueue, true, deliverCallback, consumerTag -> {});
+            responseChannel.basicConsume(subject.toString(), true, deliverCallback, consumerTag -> {});
+        }
     }
 
 
-
     public void close() throws IOException, TimeoutException {
-        channel.close();
+        requestChannel.close();
+        responseChannel.close();
         connection.close();
     }
 }

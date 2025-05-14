@@ -6,5 +6,5 @@ import nl.lunarflow.models.ContentItem;
 import java.io.IOException;
 
 public interface MessagingService {
-    void sendMessage(ContentItem contentItem) throws IOException;
+    void sendMessage(ContentItem contentItem, Subjects subject) throws IOException;
 }

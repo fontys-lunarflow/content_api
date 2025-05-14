@@ -21,9 +21,9 @@ public class RabbitMQConfig {
     @ConfigProperty(name = "rabbitmq.exchange")
     public String exchange;
 
-    @ConfigProperty(name = "rabbitmq.routing-key")
-    public String routingKey;
+    @ConfigProperty(name = "rabbitmq.response-queue")
+    public String responseQueue;
 
-    @ConfigProperty(name = "rabbitmq.reply-queue")
-    public String replyQueue;
+    @ConfigProperty(name = "rabbitmq.request-queue")
+    public String requestQueue;
 }
