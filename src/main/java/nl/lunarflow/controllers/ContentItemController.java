@@ -7,11 +7,12 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.DELETE;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.validation.Valid;
 import org.jboss.logging.Logger;
-import org.jboss.logging.Logger.*;
 import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.MediaType;
@@ -39,6 +40,25 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @Transactional
     public List<ContentItem> get() {
         return ContentItem.listAll(Sort.by("publicationDate"));
+    }
+
+    @GET
+    @Path("weekly")
+    @Transactional
+    public List<ContentItem> getWeekly(
+        @QueryParam("week") Integer week,
+        @QueryParam("year") Integer year
+        ) {
+
+            if (week == null) {
+                throw new BadRequestException("Please supply the week.");
+            }
+
+            if (year == null) {
+                throw new BadRequestException("Please supply the week.");
+            }
+
+            return ContentItem.findByWeekAndYear(week, year);
     }
 
     @GET

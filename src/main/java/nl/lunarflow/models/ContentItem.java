@@ -3,6 +3,11 @@ package nl.lunarflow.models;
 import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
@@ -28,7 +33,7 @@ public class ContentItem extends PanacheEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     public Project project;
     
-    @NotBlank(message = "Person responsible cannnot be blacnk.")
+    @NotBlank(message = "Person responsible cannnot be blank.")
     public String personResponsibleId;
 
     // TODO: ASK DIANA WTF IS CONTENT TYPE
@@ -89,5 +94,23 @@ public class ContentItem extends PanacheEntity {
                 this.personas.add(persona);
             }
         }
+    }
+
+    // custom querying functionality
+    public static List<ContentItem> findByWeekAndYear(int week, int year) {
+        WeekFields weekFields = WeekFields.ISO;
+        LocalDate startDate = LocalDate
+            .now()
+            .withYear(year)
+            .with(weekFields.weekOfWeekBasedYear(), week)
+            .with(weekFields.dayOfWeek(), 1);
+
+        LocalDate endDate = startDate.plusDays(6);
+        LocalDateTime endOfDay = LocalDateTime.of(endDate, LocalTime.MAX);
+
+        Instant startInstant = startDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant endInstant = endOfDay.atZone(ZoneOffset.UTC).toInstant();
+
+        return find("publicationDate >= ?1 and publicationDate <= ?2", startInstant, endInstant).list();
     }
 }
