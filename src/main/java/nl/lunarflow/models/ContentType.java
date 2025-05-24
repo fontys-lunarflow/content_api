@@ -11,13 +11,13 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 @Entity
 @Table
-public class Channel extends PanacheEntity {
+public class ContentType extends PanacheEntity {
     @NotBlank
     public String name;
 
 
     // access fields
     @JsonIgnore
-    @ManyToMany(mappedBy = "channels")
+    @ManyToMany(mappedBy = "contentTypes")
     public List<ContentItem> contentItems = new ArrayList<>();
 }

@@ -37,8 +37,6 @@ public class ContentItem extends PanacheEntity {
     @NotBlank(message = "Person responsible cannnot be blank.")
     public String personResponsibleId;
 
-    // TODO: ASK DIANA WTF IS CONTENT TYPE
-    
     // TODO: ask diana
     // @URL(protocol = "https")
     // public String link;
@@ -60,7 +58,7 @@ public class ContentItem extends PanacheEntity {
     public List<Persona> personas = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
-    public List<Channel> channels = new ArrayList<>();
+    public List<ContentType> contentTypes = new ArrayList<>();
 
     @Future(message = "Publication date must be in the future.")
     public Instant publicationDate;
@@ -77,12 +75,12 @@ public class ContentItem extends PanacheEntity {
         }
     }
 
-    @JsonProperty("channelIds")
-    public void setChannelIds(List<Long> channels) {
-        for (Long channelId : channels) {
-            Channel channel = Channel.findById(channelId);
-            if (channel != null) {
-                this.channels.add(channel);
+    @JsonProperty("contentTypeIds")
+    public void setContentTypeIds(List<Long> contentTypes) {
+        for (Long contentTypeId : contentTypes) {
+            ContentType contentType = ContentType.findById(contentTypeId);
+            if (contentType != null) {
+                this.contentTypes.add(contentType);
             }
         }
     }
