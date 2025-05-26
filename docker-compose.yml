@@ -5,6 +5,8 @@ services:
         build:
             context: src/main/docker
             dockerfile: Dockerfile.dev
+            # context: .
+            # dockerfile: src/main/docker/Dockerfile.jvm-multistage
         ports:
             - "5000:8080"
             - "5005:5005" #debugging port
