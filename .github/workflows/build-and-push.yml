@@ -17,6 +17,8 @@ jobs:
       id-token: write
 
     steps:
+      - name: Debug File Presence
+        run: ls -al src/main/docker
       - name: setup QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -42,7 +44,7 @@ jobs:
         with:
           push: true
           context: .
-          file: src/main/docker/Dockerfile.jvm-multistage
+          file: ./src/main/docker/Dockerfile.jvm-multistage
           platforms: linux/amd64, linux/arm64, linux/aarch64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
