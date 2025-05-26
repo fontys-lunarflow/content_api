@@ -17,7 +17,7 @@ public class Project extends PanacheEntity {
     @NotBlank
     public String name;
 
-    @Column(length = 6)
+    @Column(length = 7)
     public String color;
 
     // access fields
