@@ -54,105 +54,56 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         @BeanParam ContentItemSearchParams params
         ) {
 
-        System.out.println(params.projectId);
-        System.out.println(params.personResponsibleId);
-        System.out.println(params.contentTypeIds);
-        System.out.println(params.status);
-
         // create the query with filters using Criteria API
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<ContentItem> cq = cb.createQuery(ContentItem.class);
         Root<ContentItem> root = cq.from(ContentItem.class);
 
+
+
         // create a list of all filters
-        List<Predicate> predicates = new ArrayList<>();
+        List<Predicate> andPredicates = new ArrayList<>();
 
-        if (params.projectId != null) {
-        predicates.add(cb.equal(root.get("project").get("id"), params.projectId));
-        }
-
-        if (params.personResponsibleId != null) {
-            predicates.add(cb.equal(root.get("personResponsibleId"), params.personResponsibleId));
-        }
-
-        if (params.lifecycleStage != null) {
-            predicates.add(cb.equal(root.get("lifecycleStage"), params.lifecycleStage));
-        }
-
-        if (params.status != null) {
-            predicates.add(cb.equal(root.get("status"), params.status));
-        }
-
-        boolean matchExactPersonas = params.peronaIds != null && !params.peronaIds.isEmpty();
-        boolean matchExactContentTypes = params.contentTypeIds != null && !params.contentTypeIds.isEmpty();
-
-        // joins
+        // JOINs (for personas and content types)
         Join<ContentItem, Persona> personaJoin = null;
         Join<ContentItem, ContentType> contentTypeJoin = null;
 
-        if (matchExactPersonas) {
+        // FILTERS
+
+        // Project IDs
+        if (params.projectIds != null && !params.projectIds.isEmpty()) {
+            andPredicates.add(root.get("project").get("id").in(params.projectIds));
+        }
+
+        // Person Responsible
+        if (params.personResponsibleIds != null && !params.personResponsibleIds.isEmpty()) {
+            andPredicates.add(root.get("personResponsibleId").in(params.personResponsibleIds));
+        }
+
+        // Lifecycle Stage
+        if (params.lifecycleStages != null && !params.lifecycleStages.isEmpty()) {
+            andPredicates.add(root.get("lifecycleStage").in(params.lifecycleStages));
+        }
+
+        // Status
+        if (params.statuses != null && !params.statuses.isEmpty()) {
+            andPredicates.add(root.get("status").in(params.statuses));
+        }
+
+        // Personas
+        if (params.personaIds != null && !params.personaIds.isEmpty()) {
             personaJoin = root.join("personas");
-            predicates.add(personaJoin.get("id").in(params.peronaIds));
+            andPredicates.add(personaJoin.get("id").in(params.personaIds));
         }
 
-        if (matchExactContentTypes) {
+        // Content Types
+        if (params.contentTypeIds != null && !params.contentTypeIds.isEmpty()) {
             contentTypeJoin = root.join("contentTypes");
-            predicates.add(contentTypeJoin.get("id").in(params.contentTypeIds));
+            andPredicates.add(contentTypeJoin.get("id").in(params.contentTypeIds));
         }
 
-        cq.where(cb.and(predicates.toArray(new Predicate[0])));
-        cq.select(root).distinct(true);
-        cq.groupBy(root.get("id"));
-
-        List<Predicate> havingPredicates = new ArrayList<>();
-
-        if (matchExactPersonas) {
-            // Ensure exactly N persona IDs matched, and no more exist
-            havingPredicates.add(cb.equal(
-                cb.countDistinct(personaJoin.get("id")),
-                params.peronaIds.size()
-            ));
-
-            // Subquery to ensure contentItem doesn't have any other persona IDs
-            Subquery<Long> sub = cq.subquery(Long.class);
-            Root<ContentItem> subRoot = sub.from(ContentItem.class);
-            Join<ContentItem, Persona> subJoin = subRoot.join("personas");
-
-            sub.select(cb.count(subRoot.get("id")))
-                .where(
-                    cb.and(
-                        cb.equal(subRoot.get("id"), root.get("id")),
-                        cb.not(subJoin.get("id").in(params.peronaIds))
-                    )
-                );
-
-            predicates.add(cb.equal(sub.select(cb.count(subRoot)), 0L));
-        }
-
-        if (matchExactContentTypes) {
-            havingPredicates.add(cb.equal(
-                cb.countDistinct(contentTypeJoin.get("id")),
-                params.contentTypeIds.size()
-            ));
-
-            Subquery<Long> sub = cq.subquery(Long.class);
-            Root<ContentItem> subRoot = sub.from(ContentItem.class);
-            Join<ContentItem, ContentType> subJoin = subRoot.join("contentTypes");
-
-            sub.select(cb.count(subRoot.get("id")))
-                .where(
-                    cb.and(
-                        cb.equal(subRoot.get("id"), root.get("id")),
-                        cb.not(subJoin.get("id").in(params.contentTypeIds))
-                    )
-                );
-
-            predicates.add(cb.equal(sub.select(cb.count(subRoot)), 0L));
-        }
-
-        if (!havingPredicates.isEmpty()) {
-            cq.having(cb.and(havingPredicates.toArray(new Predicate[0])));
-        }
+        // Apply all AND conditions
+        cq.where(cb.and(andPredicates.toArray(new Predicate[0])));
 
         // sort the results
         cq.orderBy(
@@ -162,7 +113,6 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
         var r = em.createQuery(cq).getResultList();
 
-        // return ContentItem.listAll(Sort.by("publicationDate"));
         return r;
     }
 
@@ -321,20 +271,20 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     }
 
     public static class ContentItemSearchParams {
-        @QueryParam("projectId")
-        Integer projectId;
+        @QueryParam("projectIds")
+        List<Integer> projectIds;
 
-        @QueryParam("personResponsibleId")
-        String personResponsibleId;
+        @QueryParam("personResponsibleIds")
+        List<String> personResponsibleIds;
 
-        @QueryParam("lifecycleStage")
-        LifecycleStage lifecycleStage;
+        @QueryParam("lifecycleStages")
+        List<LifecycleStage> lifecycleStages;
 
-        @QueryParam("status")
-        ContentItemStatus status;
+        @QueryParam("statuses")
+        List<ContentItemStatus> statuses;
 
         @QueryParam("personaIds")
-        List<Integer> peronaIds;
+        List<Integer> personaIds;
 
         @QueryParam("contentTypeIds")
         List<Integer> contentTypeIds;
