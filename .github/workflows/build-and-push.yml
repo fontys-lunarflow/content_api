@@ -17,6 +17,11 @@ jobs:
       id-token: write
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          # Ensure submodules or additional paths are properly fetched
+          fetch-depth: 0  # Fetch the full history to ensure all files are available
       - name: Debug File Presence
         run: ls -al src/main/docker
       - name: setup QEMU
