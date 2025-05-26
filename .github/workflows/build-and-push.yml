@@ -22,8 +22,6 @@ jobs:
         with:
           # Ensure submodules or additional paths are properly fetched
           fetch-depth: 0  # Fetch the full history to ensure all files are available
-      - name: Debug File Presence
-        run: ls -al src/main/docker
       - name: setup QEMU
         uses: docker/setup-qemu-action@v3
 
