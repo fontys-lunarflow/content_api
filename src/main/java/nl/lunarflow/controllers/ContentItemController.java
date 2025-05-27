@@ -59,8 +59,6 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         CriteriaQuery<ContentItem> cq = cb.createQuery(ContentItem.class);
         Root<ContentItem> root = cq.from(ContentItem.class);
 
-
-
         // create a list of all filters
         List<Predicate> andPredicates = new ArrayList<>();
 
@@ -100,6 +98,15 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         if (params.contentTypeIds != null && !params.contentTypeIds.isEmpty()) {
             contentTypeJoin = root.join("contentTypes");
             andPredicates.add(contentTypeJoin.get("id").in(params.contentTypeIds));
+        }
+
+        // Filter: Publication Date Range
+        if (params.publicationDateStart != null) {
+            andPredicates.add(cb.greaterThanOrEqualTo(root.get("publicationDate"), params.publicationDateStart));
+        }
+
+        if (params.publicationDateEnd != null) {
+            andPredicates.add(cb.lessThanOrEqualTo(root.get("publicationDate"), params.publicationDateEnd));
         }
 
         // Apply all AND conditions
@@ -289,7 +296,10 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         @QueryParam("contentTypeIds")
         List<Integer> contentTypeIds;
 
-        // @QueryParam("publicationDate")
-        // Instant publicationDate;
+        @QueryParam("publicationDateStart")
+        Instant publicationDateStart;
+        
+        @QueryParam("publicationDateEnd")
+        Instant publicationDateEnd;
     }
 }
