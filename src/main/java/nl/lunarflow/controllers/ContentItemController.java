@@ -20,6 +20,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.EntityManager;
@@ -68,7 +69,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
         // FILTERS
 
-        // Project IDs
+        // Project
         if (params.projectIds != null && !params.projectIds.isEmpty()) {
             andPredicates.add(root.get("project").get("id").in(params.projectIds));
         }
@@ -100,13 +101,27 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
             andPredicates.add(contentTypeJoin.get("id").in(params.contentTypeIds));
         }
 
-        // Filter: Publication Date Range
+        // Publication Date Range
         if (params.publicationDateStart != null) {
             andPredicates.add(cb.greaterThanOrEqualTo(root.get("publicationDate"), params.publicationDateStart));
         }
 
         if (params.publicationDateEnd != null) {
             andPredicates.add(cb.lessThanOrEqualTo(root.get("publicationDate"), params.publicationDateEnd));
+        }
+
+        // Labels
+        if (params.labelIds != null && !params.labelIds.isEmpty()) {
+            // Use EXISTS subquery to check if any of the requested labelIds exist in the content item's labelIds collection
+            Subquery<Long> labelSubquery = cq.subquery(Long.class);
+            Root<ContentItem> labelRoot = labelSubquery.from(ContentItem.class);
+            
+            labelSubquery.select(labelRoot.get("id"))
+                .where(cb.and(
+                    cb.equal(labelRoot.get("id"), root.get("id")),
+                    labelRoot.join("labelIds").in(params.labelIds)
+                ));
+            andPredicates.add(cb.exists(labelSubquery));
         }
 
         // Apply all AND conditions
@@ -220,6 +235,8 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         entity.lifecycleStage = updatedContentItem.lifecycleStage;
         entity.status = updatedContentItem.status;
         entity.contentTypes = updatedContentItem.contentTypes;
+        entity.personas = updatedContentItem.personas;
+        entity.labelIds = updatedContentItem.labelIds;
         entity.publicationDate = updatedContentItem.publicationDate;
 
         entity.persistAndFlush();
@@ -301,5 +318,8 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         
         @QueryParam("publicationDateEnd")
         Instant publicationDateEnd;
+
+        @QueryParam("labelIds")
+        List<Long> labelIds;
     }
 }

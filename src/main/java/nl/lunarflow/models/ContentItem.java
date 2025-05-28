@@ -3,26 +3,26 @@ package nl.lunarflow.models;
 import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.time.temporal.WeekFields;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import java.time.temporal.WeekFields;
+import io.quarkus.panache.common.Sort;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.ElementCollection;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
-
 import org.hibernate.validator.constraints.URL;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.panache.common.Sort;
 
 @Entity
 @Table
@@ -42,7 +42,6 @@ public class ContentItem extends PanacheEntity {
     // public String link;
     
     // gitlab ticket fields
-    
     @URL(protocol = "https")
     public String gitlabIssueUrl;
     
@@ -59,6 +58,13 @@ public class ContentItem extends PanacheEntity {
 
     @ManyToMany(fetch = FetchType.EAGER)
     public List<ContentType> contentTypes = new ArrayList<>();
+
+    // Store GitLab label IDs directly without creating a Label entity
+    @ElementCollection(fetch = FetchType.EAGER)
+    public List<Long> labelIds = new ArrayList<>();
+
+    // @OneToMany(mappedBy = "contentItem", fetch = FetchType.EAGER)
+    // public List<ContentItemLabel> labels = new ArrayList<>();
 
     @Future(message = "Publication date must be in the future.")
     public Instant publicationDate;
@@ -82,6 +88,14 @@ public class ContentItem extends PanacheEntity {
             if (contentType != null) {
                 this.contentTypes.add(contentType);
             }
+        }
+    }
+
+    @JsonProperty("labelIds")
+    public void setLabelIds(List<Long> labelIds) {
+        if (labelIds != null) {
+            this.labelIds.clear();
+            this.labelIds.addAll(labelIds);
         }
     }
     
