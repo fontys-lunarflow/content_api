@@ -14,7 +14,7 @@ spec:
       serviceAccountName: quarkus-app
       containers:
       - name: content-api
-        image: ghcr.io/fontys-lunarflow/content_api:latest
+        image: ghcr.io/fontys-lunarflow/content_api:master
         imagePullPolicy: Always
         resources:
           limits:
