@@ -8,6 +8,7 @@ import jakarta.ws.rs.Produces;
 import nl.lunarflow.models.Project;
 import jakarta.ws.rs.core.MediaType;
 import io.quarkus.panache.common.Sort;
+import jakarta.annotation.security.RolesAllowed;
 
 @Path("/projects")
 @Produces(MediaType.APPLICATION_JSON)
@@ -15,6 +16,7 @@ import io.quarkus.panache.common.Sort;
 public class ProjectController {
 
     @GET
+    @RolesAllowed({"LunarflowViewers"})
     public List<Project> get() {
         return Project.listAll(Sort.by("name"));
     }

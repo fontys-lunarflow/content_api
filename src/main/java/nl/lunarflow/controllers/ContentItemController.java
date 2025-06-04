@@ -1,12 +1,12 @@
 package nl.lunarflow.controllers;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.time.Instant;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.POST;
+import java.util.ArrayList;
 import jakarta.ws.rs.DELETE;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -20,15 +20,15 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.persistence.criteria.Subquery;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.persistence.criteria.CriteriaQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -51,6 +51,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
     @GET
     @Transactional
+    @RolesAllowed({"LunarflowViewers"})
     public List<ContentItem> get(
         @BeanParam ContentItemSearchParams params
         ) {
@@ -141,6 +142,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @GET
     @Path("weekly")
     @Transactional
+    @RolesAllowed({"LunarflowViewers"})
     public List<ContentItem> getWeekly(
         @QueryParam("week") Integer week,
         @QueryParam("year") Integer year
@@ -165,6 +167,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @GET
     @Path("monthly")
     @Transactional
+    @RolesAllowed({"LunarflowViewers"})
     public List<ContentItem> getMonthly(
         @QueryParam("month") Integer month,
         @QueryParam("year") Integer year
@@ -187,6 +190,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
     @GET
     @Path("{id}")
+    @RolesAllowed({"LunarflowViewers"})
     // @Transactional
     public ContentItem getSingle(Long id) {
         ContentItem entity = ContentItem.findById(id);
@@ -200,6 +204,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
     @POST
     @Transactional
+    @RolesAllowed({"LunarflowEditors"})
     public Response create(@Valid ContentItem contentItem) {
 
         if (contentItem.project == null) {
@@ -215,6 +220,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @PUT
     @Path("{id}")
     @Transactional
+    @RolesAllowed({"LunarflowEditors"})
     public Response update (Long id, @Valid ContentItem updatedContentItem) {
         ContentItem entity = ContentItem.findById(id);
 
@@ -247,6 +253,7 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @DELETE
     @Path("{id}")
     @Transactional
+    @RolesAllowed({"LunarflowEditors"})
     public Response delete(Long id) {
         ContentItem entity = ContentItem.findById(id);
 
@@ -295,6 +302,9 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     }
 
     public static class ContentItemSearchParams {
+        @QueryParam("title")
+        String title;
+
         @QueryParam("projectIds")
         List<Integer> projectIds;
 
