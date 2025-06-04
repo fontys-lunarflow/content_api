@@ -9,7 +9,10 @@ services:
             # dockerfile: src/main/docker/Dockerfile.jvm-multistage
         ports:
             - "5000:8080"
-            - "5005:5005" #debugging port
+        environment:
+            KC_URL: ${KC_URL:?Missing Keycloak URL}
+            KC_CLIENT_ID: ${KC_CLIENT_ID:?Missing Keycloak client id}
+            KC_CLIENT_SECRET: ${KC_CLIENT_SECRET:?Missing Keycloak client secret}
         restart: always
         volumes:
             - ./:/work/
@@ -38,17 +41,34 @@ services:
             timeout: 5s
             retries: 6
 
-    # pgadmin
-    pgadmin:
-        image: dpage/pgadmin4
-        container_name: pgadmin4_container
-        restart: always
+    mq:
+        container_name: rabbitmq
+        image: rabbitmq:4-management
         ports:
-            - "8888:80"
-        environment:
-            PGADMIN_DEFAULT_EMAIL: admin@admin.com
-            PGADMIN_DEFAULT_PASSWORD: password
+            - 15672:15672
         volumes:
-            - ./volumes/pgadmin:/var/lib/pgadmin
-        depends_on:
-            - db
+            - ./volumes/rabbitmq:/var/lib/rabbitmq
+        environment:
+            RABBITMQ_DEFAULT_USER: admin
+            RABBITMQ_DEFAULT_PASS: admin
+        healthcheck:
+            test: rabbitmq-diagnostics -q ping
+            interval: 5s
+            timeout: 5s
+            retries: 6
+
+
+    # pgadmin
+    # pgadmin:
+    #     image: dpage/pgadmin4
+    #     container_name: pgadmin4_container
+    #     restart: always
+    #     ports:
+    #         - "8888:80"
+    #     environment:
+    #         PGADMIN_DEFAULT_EMAIL: admin@admin.com
+    #         PGADMIN_DEFAULT_PASSWORD: password
+    #     volumes:
+    #         - ./volumes/pgadmin:/var/lib/pgadmin
+    #     depends_on:
+    #         - db
