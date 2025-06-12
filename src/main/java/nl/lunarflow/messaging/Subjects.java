@@ -25,4 +25,13 @@ public enum Subjects {
     public String toString() {
         return topic;
     }
+
+    public static Subjects getSubject(final String subject) {
+        for (Subjects s : Subjects.values()) {
+            if (s.topic.equals(subject)) {
+                return s;
+            }
+        }
+        return null;
+    }
 }

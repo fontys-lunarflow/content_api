@@ -1,12 +1,9 @@
 package nl.lunarflow.models;
 
 import java.time.Instant;
-import jakarta.persistence.Table;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Enumerated;
+import java.util.List;
+
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.URL;

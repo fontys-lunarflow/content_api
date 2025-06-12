@@ -1,10 +1,7 @@
 package nl.lunarflow.messaging;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import nl.lunarflow.models.ContentItem;
-
 import java.io.IOException;
 
 public interface MessagingService {
-    void sendMessage(ContentItem contentItem, Subjects subject) throws IOException;
+    void sendMessage(String id, String json, String subject, boolean reply) throws IOException;
 }

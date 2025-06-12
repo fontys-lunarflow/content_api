@@ -22,8 +22,10 @@ public class RabbitMQConfig {
     public String exchange = "ticket.exchange";
 
 //    @ConfigProperty(name = "rabbitmq.response-queue")
-    public String responseQueue = "ticketapi.response";
+    public String otherService = "ticket_api";
 
 //    @ConfigProperty(name = "rabbitmq.request-queue")
-    public String requestQueue = "ticketapi.request";
+    public String thisService = "content_api";
+
+    public String correlationId = "content_item";
 }

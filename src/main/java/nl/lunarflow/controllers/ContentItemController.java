@@ -2,6 +2,8 @@ package nl.lunarflow.controllers;
 
 import java.io.IOException;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectWriter;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -39,6 +41,9 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
     @Inject
     MessagingService messagingService;
 
+    @Inject
+    nl.lunarflow.logging.Logger fileLogger;
+
     @GET
     @Transactional
     public List<ContentItem> get() {
@@ -64,12 +69,17 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
 
         if (contentItem.project == null) {
             // FIXME: i cannot get projectId from the request body, and raising 404 in the deserialization (Content) does not work
+            fileLogger.log("Could not find project");
             throw new NotFoundException("Please specify an existing project.");
         }
 
         contentItem.persistAndFlush();
 
-        messagingService.sendMessage(contentItem, Subjects.TICKET_CREATE);
+        fileLogger.log("Added content item " + contentItem.id + " to project " + contentItem.project);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(contentItem);
+
+        messagingService.sendMessage(String.valueOf(contentItem.id), json, Subjects.TICKET_CREATE.name(), true);
 
         return Response.ok().entity(contentItem).build();
     }
@@ -119,7 +129,9 @@ private static final Logger LOGGER = Logger.getLogger(ContentItemController.clas
         
         ObjectNode responseBody = objectMapper.createObjectNode();
 
-        messagingService.sendMessage(entity, Subjects.TICKET_CLOSE);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(entity);
+        messagingService.sendMessage(String.valueOf(entity.id), json, Subjects.TICKET_CLOSE.name(), true);
 
         responseBody.put("message", "Content item deleted successfully.");
 

@@ -12,12 +12,12 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 @ApplicationScoped
-public class RabbitMQClient implements MessagingService {
+public class RabbitMQClient implements MessagingService, QueueDeclarer {
     private Channel channel;
     private Connection connection;
 
     @Inject
-    ResponseHandler responseHandler;
+    RabbitMQConsumer consumer;
 
     @Inject
     RabbitMQConfig rabbitMQConfig;
@@ -36,53 +36,59 @@ public class RabbitMQClient implements MessagingService {
 
         channel.exchangeDeclare(rabbitMQConfig.exchange, BuiltinExchangeType.DIRECT, true);
 
-        // Setup 2 different channels, one for sending messages to ticket API, one for receiving
-        for (Subjects subject : Subjects.values()) {
-            String queueName = "content_api." + subject.toString();
-            channel.queueDeclare(queueName, true, false, false, null);
-
-            channel.queueBind(queueName, rabbitMQConfig.exchange, queueName);
-
-            channel.basicConsume(queueName,true, (consumerTag, delivery) ->{
-                String correlationId = delivery.getProperties().getCorrelationId();
-                String body = new String(delivery.getBody());
-
-                responseHandler.handleResponse(correlationId, body, subject);
-//
-//                if (replyTo != null && !replyTo.isEmpty()) {
-//                    AMQP.BasicProperties replyProps = new AMQP.BasicProperties
-//                            .Builder()
-//                            .correlationId(correlationId)
-//                            .build();
-//
-//                    channel.basicPublish("", replyTo, replyProps, response.getBytes());
-//                }
-            }, consumerTag -> {});
-        }
-
-
+        // We give a reference of this MessagingService to the consumer, so it can declare queues
+        consumer.init(this);
     }
 
-    public void sendMessage(ContentItem contentItem, Subjects subject) throws IOException {
+    @Override
+    public void declareQueue(String queueName) throws IOException {
+        String longQueueName = rabbitMQConfig.thisService + "." + queueName;
+        channel.queueDeclare(longQueueName, true, false, false, null);
+
+        channel.queueBind(longQueueName, rabbitMQConfig.exchange, longQueueName);
+
+        channel.basicConsume(longQueueName,true, (consumerTag, delivery) ->{
+            String correlationId = delivery.getProperties().getCorrelationId();
+            String body = new String(delivery.getBody());
+
+            String replyTo = delivery.getProperties().getReplyTo();
+
+            // This is split intentionally, so in my consumer methods I could optimize for not having to return a response
+            if (replyTo != null && !replyTo.isEmpty()) {
+
+                String response = consumer.handleCallWithResponse(correlationId, body, queueName, delivery);
+                AMQP.BasicProperties replyProps = new AMQP.BasicProperties
+                        .Builder()
+                        .correlationId(correlationId)
+                        .build();
+
+                channel.basicPublish("", replyTo, replyProps, response.getBytes());
+            } else {
+                consumer.handleCall(correlationId, body, queueName, delivery);
+            }
+        }, consumerTag -> {});
+    }
+
+    public void sendMessage(String id, String json, String subject, boolean reply) throws IOException {
         // We are using the content item ID as identifier so I can easily refer to the content item in db after the fact
         // TODO: discuss with the group if this is okay, or we should change this for safety reasons
-        String routingKey = "ticket_api." + subject.toString();
-        String correlationId = "content_api.content_item." + contentItem.id.toString();
+        String routingKey = rabbitMQConfig.otherService + "." + subject;
+        String correlationId = rabbitMQConfig.thisService + "." + rabbitMQConfig.correlationId + "." + id;
 
-        String queueName = "content_api." + subject.toString();
+        String queueName = rabbitMQConfig.thisService + "." + subject;
 
-
-        AMQP.BasicProperties props = new AMQP.BasicProperties
+        AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties
                 .Builder()
-                .correlationId(correlationId)
-                .replyTo(queueName)
-                .build();
+                .correlationId(correlationId);
 
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String json = ow.writeValueAsString(contentItem);
+        if (reply) {
+            builder.replyTo(queueName);
+        }
 
-        // Currently we are sending the full content item as json to the tic(tAPI
-        // TODO: change this
+        AMQP.BasicProperties props = builder.build();
+
+        // Currently we are sending the full content item as json to the ticketAPI
+        // TODO: think if we should change this
         channel.basicPublish(rabbitMQConfig.exchange, routingKey, props, json.getBytes());
     }
 
