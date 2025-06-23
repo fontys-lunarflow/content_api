@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.client.Delivery;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import nl.lunarflow.logging.Logger;
 import nl.lunarflow.models.ContentItem;
 
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@ApplicationScoped
 public class RabbitMQUser implements RabbitMQConsumer {
     @Inject
     private Logger logger;
@@ -29,6 +32,7 @@ public class RabbitMQUser implements RabbitMQConsumer {
     }
 
     @Override
+    @Transactional
     public String handleCallWithResponse(String correlationId, String body, String queueName, Delivery delivery) {
         if (!correlationId.startsWith("content_api.content_item.")) return null;
         Long id;
@@ -86,7 +90,6 @@ public class RabbitMQUser implements RabbitMQConsumer {
 
     private String handleTicketCreate(ContentItem item, JsonNode json, Delivery delivery) {
         String gitlabUrl = json.path("url").asText();
-
         if (gitlabUrl != null && !gitlabUrl.isBlank()) {
             logger.log(String.format("Adding github url of %d to database", item.id));
 

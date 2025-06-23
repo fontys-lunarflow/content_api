@@ -45,7 +45,7 @@ public class Logger {
 
             String entry = String.format("[%s] %s: %s", timestamp, classMethod, content);
              // [12:23:55] nl.lunarflow.logging.log:59: Something went wrong
-
+            System.out.println(entry);
             writer.write(entry);
         } catch (IOException e) {
             e.printStackTrace();

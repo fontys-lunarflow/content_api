@@ -28,7 +28,7 @@ public enum Subjects {
 
     public static Subjects getSubject(final String subject) {
         for (Subjects s : Subjects.values()) {
-            if (s.topic.equals(subject)) {
+            if (s.name().equals(subject)) {
                 return s;
             }
         }

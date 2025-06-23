@@ -9,7 +9,6 @@ import jakarta.transaction.Transactional;
 import nl.lunarflow.logging.Logger;
 import nl.lunarflow.models.ContentItem;
 
-@ApplicationScoped
 public class ContentItemResponseHandler implements ResponseHandler {
     private final ObjectMapper mapper = new ObjectMapper();
 
